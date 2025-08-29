@@ -17,37 +17,8 @@ import AdminUserDetail from './components/Admin/AdminUserDetail';
 import AdminUsersList from './components/Admin/AdminUsersList';
 import SettingsPage from './components/Settings/SettingsPage';
 
-// Mock transactions data
-const mockTransactions = [
-  {
-    id: '1',
-    type: 'deposit',
-    amount: 1000,
-    currency: 'USDT',
-    status: 'completed',
-    createdAt: new Date('2024-12-20T10:30:00Z')
-  },
-  {
-    id: '2',
-    type: 'withdrawal',
-    amount: 500,
-    currency: 'BTC',
-    status: 'pending',
-    createdAt: new Date('2024-12-19T15:45:00Z')
-  },
-  {
-    id: '3',
-    type: 'deposit',
-    amount: 2500,
-    currency: 'ETH',
-    status: 'completed',
-    createdAt: new Date('2024-12-18T09:15:00Z')
-  }
-];
-
 const AppContent: React.FC = () => {
   const { user, isAuthenticated, isAdminAuthenticated, logout, updateUser } = useAuth();
-  const [transactions, setTransactions] = useState(mockTransactions);
 
   return (
     <div className="min-h-screen bg-deep-black text-slate-100">
@@ -59,9 +30,28 @@ const AppContent: React.FC = () => {
                 <AdminLayout onLogout={logout}>
                   <AdminDashboard 
                     users={user ? [user] : []} 
-                    transactions={transactions}
+                    transactions={user?.transactions || []}
                     onUpdateUser={updateUser}
-                    onAddTransaction={(transaction) => setTransactions(prev => [...prev, transaction])}
+                    onAddTransaction={(transaction) => {
+                      // This will now update the user's transactions in AuthContext
+                      if (user) {
+                        // Convert admin transaction format to AuthContext format
+                        const authContextTransaction = {
+                          id: transaction.id,
+                          amount: transaction.amount,
+                          description: `${transaction.type} ${transaction.amount} ${transaction.currency}`,
+                          status: 'success', // Admin transactions are typically successful
+                          timestamp: transaction.createdAt || new Date(),
+                          type: transaction.type === 'deposit' ? 'credit' : 'debit'
+                        };
+                        
+                        const updatedUser = {
+                          ...user,
+                          transactions: [authContextTransaction, ...(user.transactions || [])]
+                        };
+                        updateUser(updatedUser);
+                      }
+                    }}
                   />
                 </AdminLayout>
               </ProtectedRoute>
@@ -99,7 +89,7 @@ const AppContent: React.FC = () => {
             isAuthenticated ? (
               <ProtectedRoute>
                 <Layout user={user!} onLogout={logout}>
-                  <Dashboard user={user!} transactions={transactions} />
+                  <Dashboard user={user!} transactions={user?.transactions || []} />
                 </Layout>
               </ProtectedRoute>
             ) : (
@@ -111,7 +101,16 @@ const AppContent: React.FC = () => {
             isAuthenticated ? (
               <ProtectedRoute>
                 <Layout user={user!} onLogout={logout}>
-                  <DepositPage onDeposit={(transaction) => setTransactions(prev => [...prev, transaction])} />
+                  <DepositPage onDeposit={(transaction) => {
+                    // This will update the user's transactions in AuthContext
+                    if (user) {
+                      const updatedUser = {
+                        ...user,
+                        transactions: [transaction, ...(user.transactions || [])]
+                      };
+                      updateUser(updatedUser);
+                    }
+                  }} />
                 </Layout>
               </ProtectedRoute>
             ) : (
@@ -123,7 +122,16 @@ const AppContent: React.FC = () => {
             isAuthenticated ? (
               <ProtectedRoute>
                 <Layout user={user!} onLogout={logout}>
-                  <WithdrawPage balance={user!.balance} onWithdraw={(transaction) => setTransactions(prev => [...prev, transaction])} />
+                  <WithdrawPage balance={user!.balance} onWithdraw={(transaction) => {
+                    // This will update the user's transactions in AuthContext
+                    if (user) {
+                      const updatedUser = {
+                        ...user,
+                        transactions: [transaction, ...(user.transactions || [])]
+                      };
+                      updateUser(updatedUser);
+                    }
+                  }} />
                 </Layout>
               </ProtectedRoute>
             ) : (
@@ -135,7 +143,7 @@ const AppContent: React.FC = () => {
             isAuthenticated ? (
               <ProtectedRoute>
                 <Layout user={user!} onLogout={logout}>
-                  <TransactionsPage transactions={transactions} />
+                  <TransactionsPage transactions={user?.transactions || []} />
                 </Layout>
               </ProtectedRoute>
             ) : (

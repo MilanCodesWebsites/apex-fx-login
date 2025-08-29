@@ -14,7 +14,6 @@ const loginSchema = yup.object({
     .required('Password is required')
 });
 
-
 interface LoginFormProps {
   onLogin: (email: string, password: string) => Promise<boolean>;
   onAdminLogin: (email: string, password: string) => Promise<boolean>; // kept for compatibility, not used
@@ -51,26 +50,25 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLogin, onAdminLogin, onSwitchTo
   };
 
   return (
-    <div className="w-full max-w-lg mx-auto relative">
+    <div className="w-full max-w-lg mx-auto relative px-4 sm:px-0">
       {/* Abstract green background accents */}
-      <div className="pointer-events-none absolute -inset-x-10 -top-10 -bottom-10 opacity-40">
-        <div className="absolute -top-6 -left-8 w-64 h-64 bg-neon-green/20 blur-3xl rounded-full" />
-        <div className="absolute bottom-0 -right-10 w-72 h-72 bg-dark-green/20 blur-3xl rounded-full" />
+      <div className="pointer-events-none absolute -inset-x-6 sm:-inset-x-10 -top-6 sm:-top-10 -bottom-6 sm:-bottom-10 opacity-40">
+        <div className="absolute -top-4 sm:-top-6 -left-6 sm:-left-8 w-48 sm:w-64 h-48 sm:h-64 bg-neon-green/20 blur-3xl rounded-full" />
+        <div className="absolute bottom-0 -right-6 sm:-right-10 w-56 sm:w-72 h-56 sm:h-72 bg-dark-green/20 blur-3xl rounded-full" />
       </div>
-      <div className="relative bg-deep-black border border-slate-700 rounded-2xl shadow-2xl p-10">
+      <div className="relative bg-deep-black border border-slate-700 rounded-2xl shadow-2xl p-6 sm:p-8 md:p-10">
         {/* Header */}
-        <div className="text-center mb-10">
-          <div className="flex items-center justify-center mb-4">
-            <img src="https://otiktpyazqotihijbwhm.supabase.co/storage/v1/object/public/images/ec1e8e78-e8e4-4f4d-a225-181630b1f3cd-ChatGPT_Image_Aug_28__2025__12_07_34_AM-removebg-preview.png" alt="ApexFX" className="h-20" />
+        <div className="text-center mb-6 sm:mb-8 md:mb-10">
+          <div className="flex items-center justify-center mb-3 sm:mb-4">
+            <img src="https://otiktpyazqotihijbwhm.supabase.co/storage/v1/object/public/images/ec1e8e78-e8e4-4f4d-a225-181630b1f3cd-ChatGPT_Image_Aug_28__2025__12_07_34_AM-removebg-preview.png" alt="ApexFX" className="h-16 sm:h-18 md:h-20" />
           </div>
-          <h2 className="text-2xl font-semibold text-slate-200">Sign in to continue trading</h2>
+          <h2 className="text-xl sm:text-2xl font-semibold text-slate-200">Sign in to continue trading</h2>
         </div>
 
-
         {/* Form */}
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 sm:space-y-5 md:space-y-6">
           <div>
-            <label className="block text-sm font-medium text-slate-200 mb-2">Email Address</label>
+            <label className="block text-xs sm:text-sm font-medium text-slate-200 mb-2">Email Address</label>
             <Input
               icon={Mail}
               placeholder="Enter your email"
@@ -81,7 +79,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLogin, onAdminLogin, onSwitchTo
             </div>
           
           <div>
-            <label className="block text-sm font-medium text-slate-200 mb-2">Password</label>
+            <label className="block text-xs sm:text-sm font-medium text-slate-200 mb-2">Password</label>
             <div className="relative">
               <Input
                 icon={Lock}
@@ -95,43 +93,34 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLogin, onAdminLogin, onSwitchTo
                 onClick={() => setShowPassword(!showPassword)}
                 className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-neon-green transition-colors"
               >
-                {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                {showPassword ? <EyeOff className="w-4 h-4 sm:w-5 sm:h-5" /> : <Eye className="w-4 h-4 sm:w-5 sm:h-5" />}
               </button>
             </div>
+            {errors.password && (
+              <p className="mt-1 text-xs text-red-400">{errors.password.message}</p>
+            )}
           </div>
 
-          {/* Row: remember + forgot */}
-          <div className="flex items-center justify-between text-slate-300">
-            <label className="flex items-center space-x-2 select-none">
-              <input type="checkbox" className="w-4 h-4 rounded border-slate-600 bg-slate-800" />
-              <span className="text-sm">Remember me</span>
-            </label>
-            <button type="button" className="text-blue-400 hover:text-blue-300 text-sm">Forgot your password?</button>
-          </div>
-
-          <Button type="submit" className="w-full" loading={isLoading}>
-            Sign In
+          <Button
+            type="submit"
+            disabled={isLoading}
+            className="w-full py-3 sm:py-3.5 md:py-4 text-sm sm:text-base font-medium"
+          >
+            {isLoading ? 'Signing in...' : 'Sign In'}
           </Button>
         </form>
 
         {/* Switch to Register */}
-          <div className="mt-6 text-center">
-            <p className="text-slate-400">
+        <div className="mt-6 sm:mt-8 text-center">
+          <p className="text-xs sm:text-sm text-slate-400">
               Don't have an account?{' '}
               <button
                 onClick={onSwitchToRegister}
                 className="text-neon-green hover:text-dark-green font-medium transition-colors"
               >
-                Sign Up
+              Sign up here
               </button>
             </p>
-          </div>
-
-        {/* Demo Credentials */}
-          <div className="mt-6 p-4 bg-slate-700/50 rounded-xl border border-slate-600">
-            <p className="text-sm text-slate-300 mb-2">Demo Credentials:</p>
-            <p className="text-xs text-slate-400">Email: any valid email</p>
-            <p className="text-xs text-slate-400">Password: Any password (8+ characters)</p>
           </div>
       </div>
     </div>

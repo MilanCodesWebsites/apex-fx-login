@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
-import { TrendingUp, TrendingDown, DollarSign, Clock, CheckCircle, XCircle, AlertCircle } from 'lucide-react';
+import { TrendingUp, TrendingDown, DollarSign, Clock, CheckCircle, XCircle, AlertCircle, Quote, Target, Zap } from 'lucide-react';
 
 interface Transaction {
   id: string;
@@ -28,6 +28,59 @@ const Dashboard: React.FC = () => {
   const pnlPercentage = calculatePnL();
   const pnlAmount = totalBalance - initialBalance;
 
+  // Motivational quotes that change every 24 hours
+  const motivationalQuotes = [
+    {
+      quote: "The biggest risk is not taking any risk. In a world that's changing quickly, the only strategy that is guaranteed to fail is not taking risks.",
+      author: "Mark Zuckerberg",
+      category: "Risk Management"
+    },
+    {
+      quote: "Risk comes from not knowing what you're doing. The best traders are those who understand both the risks and rewards of their decisions.",
+      author: "Warren Buffett",
+      category: "Trading Wisdom"
+    },
+    {
+      quote: "Success in trading is not about avoiding losses, but about managing them. Every loss is a lesson that brings you closer to profit.",
+      author: "George Soros",
+      category: "Loss Management"
+    },
+    {
+      quote: "The market is a device for transferring money from the impatient to the patient. Time is your greatest ally in trading.",
+      author: "Benjamin Graham",
+      category: "Patience"
+    },
+    {
+      quote: "Diversification is protection against ignorance. It makes little sense if you know what you are doing.",
+      author: "Warren Buffett",
+      category: "Portfolio Strategy"
+    },
+    {
+      quote: "The goal of a successful trader is to make the best trades. Money is secondary. The best trades are the ones that align with your strategy.",
+      author: "Alexander Elder",
+      category: "Strategy"
+    },
+    {
+      quote: "Fear and greed are the two emotions that drive markets. Master these emotions, and you master the market.",
+      author: "Jesse Livermore",
+      category: "Emotional Control"
+    },
+    {
+      quote: "In trading, you have to be defensive and aggressive at the same time. Defensive about your capital, aggressive about your opportunities.",
+      author: "Paul Tudor Jones",
+      category: "Capital Management"
+    }
+  ];
+
+  // Get quote of the day (changes every 24 hours)
+  const getQuoteOfTheDay = () => {
+    const today = new Date();
+    const dayOfYear = Math.floor((today.getTime() - new Date(today.getFullYear(), 0, 0).getTime()) / (1000 * 60 * 60 * 24));
+    return motivationalQuotes[dayOfYear % motivationalQuotes.length];
+  };
+
+  const quoteOfTheDay = getQuoteOfTheDay();
+
   useEffect(() => {
     // Load CoinGecko widget script
     const script = document.createElement('script');
@@ -36,7 +89,7 @@ const Dashboard: React.FC = () => {
     document.body.appendChild(script);
 
     return () => {
-      document.body.removeChild(script);
+      document.body.appendChild(script);
     };
   }, []);
 
@@ -121,15 +174,16 @@ const Dashboard: React.FC = () => {
           <div className="bg-slate-800 rounded-xl p-4 text-center">
             <p className="text-sm text-slate-400 mb-1">P&L Percentage</p>
             <p className={`text-lg font-semibold ${pnlPercentage >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-              {pnlPercentage >= 0 ? '+' : ''}{pnlPercentage.toFixed(2)}%
+              {pnlPercentage >= 0 ? '' : ''}{pnlPercentage.toFixed(2)}%
             </p>
           </div>
         </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Quick Stats */}
-        <div className="space-y-4">
+        {/* Left Column - Account Overview and Quote */}
+        <div className="space-y-6">
+          {/* Account Overview */}
           <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6">
             <h3 className="text-lg font-semibold text-white mb-4">Account Overview</h3>
             <div className="space-y-4">
@@ -176,18 +230,47 @@ const Dashboard: React.FC = () => {
               </div>
             </div>
           </div>
+
+          {/* Motivational Quote of the Day */}
+          <div className="bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 border border-slate-700 rounded-2xl p-6">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="p-2 bg-neon-green/20 rounded-lg">
+                <Quote className="w-5 h-5 text-neon-green" />
+              </div>
+              <div>
+                <h3 className="text-lg font-semibold text-white">Quote of the Day</h3>
+                <p className="text-xs text-slate-400">{quoteOfTheDay.category}</p>
+              </div>
+            </div>
+            
+            <blockquote className="text-slate-200 italic mb-4 leading-relaxed">
+              "{quoteOfTheDay.quote}"
+            </blockquote>
+            
+            <div className="flex items-center justify-between">
+              <cite className="text-sm text-slate-400 not-italic">
+                — {quoteOfTheDay.author}
+              </cite>
+              <div className="flex items-center gap-2 text-xs text-slate-500">
+                <Target className="w-3 h-3" />
+                <span>Refreshes daily</span>
+              </div>
+            </div>
+          </div>
         </div>
 
-        {/* Market Widget */}
-        <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6">
-          <h3 className="text-lg font-semibold text-white mb-4">Market Overview</h3>
-          <div className="h-64">
+        {/* Right Column - Market Widget */}
+        <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-6">
+          <h3 className="text-base sm:text-lg font-semibold text-white mb-3 sm:mb-4">Market Overview</h3>
+          <div className="h-80 sm:h-96 md:h-[28rem] lg:h-[32rem] w-full overflow-hidden">
+            <script src="https://widgets.coingecko.com/gecko-coin-list-widget.js"></script>
             <gecko-coin-list-widget 
               locale="en" 
               dark-mode="true" 
               outlined="true" 
-              coin-ids="" 
+              coin-ids="bitcoin,solana,ethereum,binancecoin,usd-coin,tether,dogecoin,hyperliquid,ethena,camp-network,arbitrum" 
               initial-currency="usd"
+              class="w-full h-full"
             />
           </div>
         </div>

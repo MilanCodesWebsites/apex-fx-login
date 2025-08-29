@@ -84,113 +84,129 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onRegister, onSwitchToLogin
   };
 
   return (
-    <div className="w-full max-w-lg mx-auto relative">
+    <div className="w-full max-w-lg mx-auto relative px-4 sm:px-0">
       {/* Abstract green background accents */}
-      <div className="pointer-events-none absolute -inset-x-10 -top-10 -bottom-10 opacity-40">
-        <div className="absolute -top-6 -left-8 w-64 h-64 bg-neon-green/20 blur-3xl rounded-full" />
-        <div className="absolute bottom-0 -right-10 w-72 h-72 bg-dark-green/20 blur-3xl rounded-full" />
+      <div className="pointer-events-none absolute -inset-x-6 sm:-inset-x-10 -top-6 sm:-top-10 -bottom-6 sm:-bottom-10 opacity-40">
+        <div className="absolute -top-4 sm:-top-6 -left-6 sm:-left-8 w-48 sm:w-64 h-48 sm:h-64 bg-neon-green/20 blur-3xl rounded-full" />
+        <div className="absolute bottom-0 -right-6 sm:-right-10 w-56 sm:w-72 h-56 sm:h-72 bg-dark-green/20 blur-3xl rounded-full" />
       </div>
-      <div className="relative bg-rich-black border border-slate-700 rounded-2xl shadow-2xl p-8">
+      <div className="relative bg-rich-black border border-slate-700 rounded-2xl shadow-2xl p-6 sm:p-8">
         {/* Header */}
-        <div className="text-center mb-8">
-          <div className="flex items-center justify-center mb-4">
-            <img src="https://otiktpyazqotihijbwhm.supabase.co/storage/v1/object/public/images/ec1e8e78-e8e4-4f4d-a225-181630b1f3cd-ChatGPT_Image_Aug_28__2025__12_07_34_AM-removebg-preview.png" alt="ApexFX" className="h-20" />
+        <div className="text-center mb-6 sm:mb-8">
+          <div className="flex items-center justify-center mb-3 sm:mb-4">
+            <img src="https://otiktpyazqotihijbwhm.supabase.co/storage/v1/object/public/images/ec1e8e78-e8e4-4f4d-a225-181630b1f3cd-ChatGPT_Image_Aug_28__2025__12_07_34_AM-removebg-preview.png" alt="ApexFX" className="h-16 sm:h-18 md:h-20" />
           </div>
-          <h1 className="text-3xl font-bold text-white mb-2">Join ApexFX</h1>
-          <p className="text-slate-400">Create your trading account</p>
+          <h1 className="text-2xl sm:text-3xl font-bold text-white mb-2">Join ApexFX</h1>
+          <p className="text-sm sm:text-base text-slate-400">Create your trading account</p>
         </div>
 
         {/* Form */}
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
-            <Input
-              icon={User}
-              placeholder="First name"
-              {...register('firstName')}
-              error={errors.firstName?.message}
-            />
-            <Input
-              icon={User}
-              placeholder="Last name"
-              {...register('lastName')}
-              error={errors.lastName?.message}
-            />
-          </div>
-          
-          <Input
-            icon={Mail}
-            placeholder="Enter your email"
-            type="email"
-            {...register('email')}
-            error={errors.email?.message}
-          />
-          
-          <div className="relative">
-            <Input
-              icon={Lock}
-              placeholder="Create password"
-              type={showPassword ? "text" : "password"}
-              {...register('password')}
-              error={errors.password?.message}
-            />
-            <button
-              type="button"
-              onClick={() => setShowPassword(!showPassword)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-neon-green transition-colors"
-            >
-              {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-            </button>
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 sm:space-y-5">
+          {/* Name Fields */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5">
+            <div>
+              <label className="block text-xs sm:text-sm font-medium text-slate-200 mb-2">First Name</label>
+              <Input
+                icon={User}
+                placeholder="First name"
+                {...register('firstName')}
+                error={errors.firstName?.message}
+              />
+            </div>
+            <div>
+              <label className="block text-xs sm:text-sm font-medium text-slate-200 mb-2">Last Name</label>
+              <Input
+                icon={User}
+                placeholder="Last name"
+                {...register('lastName')}
+                error={errors.lastName?.message}
+              />
+            </div>
           </div>
 
-          {/* Password strength meter */}
-          <div className="space-y-2">
-            <div className="h-2 w-full bg-slate-700 rounded-full overflow-hidden">
-              <div className={`h-full ${strengthMeta.color} ${strengthMeta.width} transition-all duration-300`} />
+          <div>
+            <label className="block text-xs sm:text-sm font-medium text-slate-200 mb-2">Email Address</label>
+            <Input
+              icon={Mail}
+              placeholder="Enter your email"
+              type="email"
+              {...register('email')}
+              error={errors.email?.message}
+            />
+          </div>
+
+          <div>
+            <label className="block text-xs sm:text-sm font-medium text-slate-200 mb-2">Password</label>
+            <div className="relative">
+              <Input
+                icon={Lock}
+                placeholder="Create a strong password"
+                type={showPassword ? "text" : "password"}
+                {...register('password')}
+                error={errors.password?.message}
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-neon-green transition-colors"
+              >
+                {showPassword ? <EyeOff className="w-4 h-4 sm:w-5 sm:h-5" /> : <Eye className="w-4 h-4 sm:w-5 sm:h-5" />}
+              </button>
             </div>
+            
+            {/* Password Strength Indicator */}
             {passwordValue && (
-              <p className={`text-xs ${strengthMeta.textColor}`}>Password strength: {strengthMeta.label}</p>
+              <div className="mt-3 space-y-2">
+                <div className="flex items-center justify-between text-xs">
+                  <span className="text-slate-400">Password strength:</span>
+                  <span className={`font-medium ${strengthMeta.textColor}`}>{strengthMeta.label}</span>
+                </div>
+                <div className="w-full bg-slate-700 rounded-full h-2">
+                  <div className={`h-2 rounded-full transition-all duration-300 ${strengthMeta.color} ${strengthMeta.width}`} />
+                </div>
+              </div>
             )}
           </div>
 
-          <div className="relative">
-            <Input
-              icon={Lock}
-              placeholder="Confirm password"
-              type={showConfirmPassword ? "text" : "password"}
-              {...register('confirmPassword')}
-              error={errors.confirmPassword?.message}
-            />
-            <button
-              type="button"
-              onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-neon-green transition-colors"
-            >
-              {showConfirmPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-            </button>
+          <div>
+            <label className="block text-xs sm:text-sm font-medium text-slate-200 mb-2">Confirm Password</label>
+            <div className="relative">
+              <Input
+                icon={Lock}
+                placeholder="Confirm your password"
+                type={showConfirmPassword ? "text" : "password"}
+                {...register('confirmPassword')}
+                error={errors.confirmPassword?.message}
+              />
+              <button
+                type="button"
+                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-neon-green transition-colors"
+              >
+                {showConfirmPassword ? <EyeOff className="w-4 h-4 sm:w-5 sm:h-5" /> : <Eye className="w-4 h-4 sm:w-5 sm:h-5" />}
+              </button>
+            </div>
           </div>
 
-          <Button type="submit" className="w-full" loading={isLoading}>
-            Create Account
+          <Button
+            type="submit"
+            disabled={isLoading}
+            className="w-full py-3 sm:py-3.5 md:py-4 text-sm sm:text-base font-medium"
+          >
+            {isLoading ? 'Creating account...' : 'Create Account'}
           </Button>
         </form>
 
         {/* Switch to Login */}
-        <div className="mt-6 text-center">
-          <p className="text-slate-400">
+        <div className="mt-6 sm:mt-8 text-center">
+          <p className="text-xs sm:text-sm text-slate-400">
             Already have an account?{' '}
             <button
               onClick={onSwitchToLogin}
               className="text-neon-green hover:text-dark-green font-medium transition-colors"
             >
-              Sign In
+              Sign in here
             </button>
-          </p>
-        </div>
-
-        {/* Terms */}
-        <div className="mt-6 p-4 bg-slate-700/50 rounded-xl border border-slate-600">
-          <p className="text-xs text-slate-400 text-center">
-            By creating an account, you agree to our Terms of Service and Privacy Policy
           </p>
         </div>
       </div>
