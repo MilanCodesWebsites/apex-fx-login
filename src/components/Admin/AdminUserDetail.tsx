@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Save, TrendingUp, TrendingDown, DollarSign } from 'lucide-react';
+import { ArrowLeft, Save, TrendingUp, TrendingDown, DollarSign, ArrowDown, ArrowUp } from 'lucide-react';
 import Button from '../UI/Button';
 import Input from '../UI/Input';
 import { useAuth } from '../../contexts/AuthContext';
@@ -25,6 +25,37 @@ interface User {
   transactions: Transaction[];
 }
 
+const transactionTypes = [
+  {
+    value: 'profit',
+    label: 'Profit',
+    icon: TrendingUp,
+    color: 'bg-green-500/20 border-green-500/40 text-green-400 hover:bg-green-500/30',
+    description: 'Add trading profit to user balance'
+  },
+  {
+    value: 'loss',
+    label: 'Loss',
+    icon: TrendingDown,
+    color: 'bg-red-500/20 border-red-500/40 text-red-400 hover:bg-red-500/30',
+    description: 'Deduct trading loss from user balance'
+  },
+  {
+    value: 'deposit',
+    label: 'Deposit',
+    icon: ArrowDown,
+    color: 'bg-blue-500/20 border-blue-500/40 text-blue-400 hover:bg-blue-500/30',
+    description: 'Add deposit to user balance'
+  },
+  {
+    value: 'withdrawal',
+    label: 'Withdrawal',
+    icon: ArrowUp,
+    color: 'bg-orange-500/20 border-orange-500/40 text-orange-400 hover:bg-orange-500/30',
+    description: 'Deduct withdrawal from user balance'
+  }
+];
+
 const AdminUserDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -32,6 +63,7 @@ const AdminUserDetail: React.FC = () => {
   
   const [user, setUser] = useState<User | null>(null);
   const [transactionForm, setTransactionForm] = useState({
+    type: 'deposit' as 'profit' | 'loss' | 'deposit' | 'withdrawal',
     amount: '',
     description: '',
     status: 'success' as const
@@ -76,13 +108,26 @@ const AdminUserDetail: React.FC = () => {
       const amount = parseFloat(transactionForm.amount);
       if (isNaN(amount)) return;
 
-      // Determine transaction type based on amount sign
-      const type: 'credit' | 'debit' = amount >= 0 ? 'credit' : 'debit';
-      const absoluteAmount = Math.abs(amount);
+      // Determine transaction type and amount based on transaction type
+      let finalAmount = amount;
+      let type: 'credit' | 'debit' = 'credit';
+      
+      switch (transactionForm.type) {
+        case 'profit':
+        case 'deposit':
+          type = 'credit';
+          finalAmount = amount;
+          break;
+        case 'loss':
+        case 'withdrawal':
+          type = 'debit';
+          finalAmount = amount;
+          break;
+      }
 
       // Add transaction through AuthContext
       addTransaction({
-        amount: absoluteAmount,
+        amount: finalAmount,
         description: transactionForm.description,
         status: transactionForm.status,
         type
@@ -90,6 +135,7 @@ const AdminUserDetail: React.FC = () => {
 
       // Reset form
       setTransactionForm({
+        type: 'deposit',
         amount: '',
         description: '',
         status: 'success'
@@ -114,23 +160,30 @@ const AdminUserDetail: React.FC = () => {
   // Show loading state while user data is being fetched
   if (!user) {
     return (
-      <div className="max-w-6xl mx-auto p-3 sm:p-6">
+      <div className="max-w-6xl mx-auto p-4 sm:p-6">
         <div className="text-center text-slate-400">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-neon-green mx-auto mb-4"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-500 mx-auto mb-4"></div>
           <p>Loading user data...</p>
         </div>
       </div>
     );
   }
 
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD'
+    }).format(amount);
+  };
+
   return (
-    <div className="max-w-6xl mx-auto p-3 sm:p-6 space-y-4 sm:space-y-6">
+    <div className="max-w-6xl mx-auto p-4 sm:p-6 space-y-4 sm:space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div className="flex items-center gap-3 sm:gap-4">
           <button
             onClick={() => navigate('/admin/users')}
-            className="p-2 text-slate-400 hover:text-white hover:bg-slate-800 rounded-xl transition-colors"
+            className="p-2 text-slate-400 hover:text-white hover:bg-slate-800/50 rounded-xl transition-all duration-200"
           >
             <ArrowLeft className="w-5 h-5" />
           </button>
@@ -144,9 +197,9 @@ const AdminUserDetail: React.FC = () => {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
         {/* User Info & P&L Card */}
         <div className="lg:col-span-1">
-          <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-6">
+          <div className="bg-slate-900/80 backdrop-blur-sm border border-slate-800/60 rounded-2xl p-4 sm:p-6 shadow-lg">
             <div className="flex items-center gap-3 sm:gap-4 mb-4 sm:mb-6">
-              <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center overflow-hidden">
+              <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-full bg-slate-800/70 border border-slate-700/50 flex items-center justify-center overflow-hidden">
                 {user.avatar ? (
                   <img src={user.avatar} alt="Profile" className="w-full h-full object-cover" />
                 ) : (
@@ -155,39 +208,39 @@ const AdminUserDetail: React.FC = () => {
                   </div>
                 )}
               </div>
-              <div>
-                <h2 className="text-lg sm:text-xl font-semibold text-white">{user.firstName} {user.lastName}</h2>
-                <p className="text-sm text-slate-400">{user.email}</p>
+              <div className="min-w-0 flex-1">
+                <h2 className="text-lg sm:text-xl font-semibold text-white truncate">{user.firstName} {user.lastName}</h2>
+                <p className="text-sm text-slate-400 truncate">{user.email}</p>
               </div>
             </div>
             
             <div className="space-y-3 sm:space-y-4">
               {/* Current Balance */}
-              <div className="bg-slate-800 rounded-xl p-3 sm:p-4">
+              <div className="bg-slate-800/50 rounded-xl p-3 sm:p-4 border border-slate-700/30">
                 <p className="text-sm text-slate-400 mb-1">Current Balance</p>
-                <p className="text-xl sm:text-2xl font-bold text-white">${(user.balance || 0).toFixed(2)}</p>
+                <p className="text-xl sm:text-2xl font-bold text-white">{formatCurrency(user.balance || 0)}</p>
               </div>
               
               {/* Initial Balance */}
-              <div className="bg-slate-800 rounded-xl p-3 sm:p-4">
+              <div className="bg-slate-800/50 rounded-xl p-3 sm:p-4 border border-slate-700/30">
                 <p className="text-sm text-slate-400 mb-1">Initial Balance</p>
-                <p className="text-base sm:text-lg font-semibold text-white">${(user.initialBalance || 0).toFixed(2)}</p>
+                <p className="text-base sm:text-lg font-semibold text-white">{formatCurrency(user.initialBalance || 0)}</p>
               </div>
 
               {/* P&L Indicator - Prominently Displayed */}
-              <div className="bg-slate-800 rounded-xl p-3 sm:p-4">
+              <div className="bg-slate-800/50 rounded-xl p-3 sm:p-4 border border-slate-700/30">
                 <p className="text-sm text-slate-400 mb-2">Profit & Loss</p>
                 <div className="flex items-center gap-3">
-                  <div className={`p-2 rounded-lg ${pnlAmount >= 0 ? 'bg-green-500/10' : 'bg-red-500/10'}`}>
+                  <div className={`p-2 rounded-lg ${pnlAmount >= 0 ? 'bg-green-500/20' : 'bg-red-500/20'}`}>
                     {pnlAmount >= 0 ? (
                       <TrendingUp className="w-4 h-4 sm:w-5 sm:h-5 text-green-400" />
                     ) : (
                       <TrendingDown className="w-4 h-4 sm:w-5 sm:h-5 text-red-400" />
                     )}
                   </div>
-                  <div>
+                  <div className="min-w-0 flex-1">
                     <p className={`text-lg sm:text-xl font-bold ${pnlAmount >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-                      {pnlAmount >= 0 ? '+' : ''}{pnlAmount.toFixed(2)}
+                      {pnlAmount >= 0 ? '+' : ''}{formatCurrency(pnlAmount)}
                     </p>
                     <p className={`text-sm font-medium ${pnlAmount >= 0 ? 'text-green-400' : 'text-red-400'}`}>
                       {pnlPercentage >= 0 ? '+' : ''}{pnlPercentage.toFixed(2)}%
@@ -197,7 +250,7 @@ const AdminUserDetail: React.FC = () => {
               </div>
               
               {/* Transaction Count */}
-              <div className="bg-slate-800 rounded-xl p-3 sm:p-4">
+              <div className="bg-slate-800/50 rounded-xl p-3 sm:p-4 border border-slate-700/30">
                 <p className="text-sm text-slate-400 mb-1">Total Transactions</p>
                 <p className="text-lg sm:text-xl font-semibold text-white">{user.transactions?.length || 0}</p>
               </div>
@@ -208,10 +261,53 @@ const AdminUserDetail: React.FC = () => {
         {/* Unified Transaction Management */}
         <div className="lg:col-span-2 space-y-4 sm:space-y-6">
           {/* Single Transaction Form */}
-          <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-6">
+          <div className="bg-slate-900/80 backdrop-blur-sm border border-slate-800/60 rounded-2xl p-4 sm:p-6 shadow-lg">
             <h3 className="text-base sm:text-lg font-semibold text-white mb-4">Add New Transaction</h3>
             
             <form onSubmit={handleTransactionSubmit} className="space-y-4">
+              {/* Transaction Type Selection */}
+              <div>
+                <label className="block text-sm font-medium text-slate-200 mb-3">Transaction Type</label>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                  {transactionTypes.map((type) => {
+                    const Icon = type.icon;
+                    const isSelected = transactionForm.type === type.value;
+                    return (
+                      <div
+                        key={type.value}
+                        className={`
+                          relative cursor-pointer rounded-xl border-2 p-3 sm:p-4 transition-all duration-200
+                          ${isSelected ? type.color : 'bg-slate-800/50 border-slate-700/50 text-slate-400 hover:border-slate-600/50'}
+                        `}
+                        onClick={() => setTransactionForm(prev => ({ ...prev, type: type.value as any }))}
+                      >
+                        <input
+                          type="radio"
+                          value={type.value}
+                          checked={isSelected}
+                          onChange={() => setTransactionForm(prev => ({ ...prev, type: type.value as any }))}
+                          className="sr-only"
+                        />
+                        <div className="text-center">
+                          <Icon className={`w-5 h-5 sm:w-6 sm:h-6 mx-auto mb-2 ${isSelected ? 'text-current' : 'text-slate-500'}`} />
+                          <p className={`font-medium text-sm ${isSelected ? 'text-current' : 'text-slate-300'}`}>
+                            {type.label}
+                          </p>
+                          <p className={`text-xs mt-1 ${isSelected ? 'text-current/80' : 'text-slate-500'}`}>
+                            {type.description}
+                          </p>
+                        </div>
+                        {isSelected && (
+                          <div className="absolute -top-1 -right-1 w-4 h-4 bg-current rounded-full flex items-center justify-center">
+                            <div className="w-2 h-2 bg-slate-900 rounded-full"></div>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
                 <div>
                   <label className="block text-sm font-medium text-slate-200 mb-2">Amount</label>
@@ -228,7 +324,7 @@ const AdminUserDetail: React.FC = () => {
                     />
                   </div>
                   <p className="text-xs text-slate-500 mt-1">
-                    Use positive values for deposits/credits, negative for withdrawals/debits
+                    Enter the transaction amount
                   </p>
                 </div>
                 
@@ -237,7 +333,7 @@ const AdminUserDetail: React.FC = () => {
                   <select
                     value={transactionForm.status}
                     onChange={(e) => setTransactionForm(prev => ({ ...prev, status: e.target.value as 'pending' | 'success' | 'denied' }))}
-                    className="w-full px-3 sm:px-4 py-2 sm:py-3 bg-slate-800 border border-slate-700 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-neon-green/50 focus:border-neon-green text-sm sm:text-base"
+                    className="w-full px-3 sm:px-4 py-2 sm:py-3 bg-slate-800 border border-slate-700 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-green-500/50 focus:border-green-500 text-sm sm:text-base transition-colors"
                   >
                     <option value="success">Success</option>
                     <option value="pending">Pending</option>
@@ -249,7 +345,7 @@ const AdminUserDetail: React.FC = () => {
               <div>
                 <label className="block text-sm font-medium text-slate-200 mb-2">Description</label>
                 <Input
-                  placeholder="e.g., Bank Transfer Deposit, Referral Bonus, Withdrawal via bank transfer"
+                  placeholder="e.g., Trading profit, Bank transfer, Referral bonus"
                   value={transactionForm.description}
                   onChange={(e) => setTransactionForm(prev => ({ ...prev, description: e.target.value }))}
                   required
@@ -257,15 +353,15 @@ const AdminUserDetail: React.FC = () => {
               </div>
 
               {/* Balance Impact Preview */}
-              <div className="bg-slate-800 rounded-xl p-3 sm:p-4">
+              <div className="bg-slate-800/50 rounded-xl p-3 sm:p-4 border border-slate-700/30">
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
                   <span className="text-sm text-slate-300">Balance Impact</span>
                   <span className="text-sm text-slate-400">
                     {transactionForm.amount && transactionForm.status === 'success' ? (
                       <>
-                        Balance will be {parseFloat(transactionForm.amount) >= 0 ? 'increased' : 'decreased'} by 
-                        <span className={`font-medium ${parseFloat(transactionForm.amount) >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-                          {' '}${Math.abs(parseFloat(transactionForm.amount)).toFixed(2)}
+                        Balance will be {['profit', 'deposit'].includes(transactionForm.type) ? 'increased' : 'decreased'} by 
+                        <span className={`font-medium ${['profit', 'deposit'].includes(transactionForm.type) ? 'text-green-400' : 'text-red-400'}`}>
+                          {' '}{formatCurrency(Math.abs(parseFloat(transactionForm.amount)))}
                         </span>
                       </>
                     ) : (
@@ -288,14 +384,14 @@ const AdminUserDetail: React.FC = () => {
           </div>
 
           {/* Transaction History */}
-          <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-6">
+          <div className="bg-slate-900/80 backdrop-blur-sm border border-slate-800/60 rounded-2xl p-4 sm:p-6 shadow-lg">
             <h3 className="text-base sm:text-lg font-semibold text-white mb-4">Transaction History</h3>
             
             <div className="space-y-3">
               {user.transactions && user.transactions.length > 0 ? (
                 user.transactions.map((transaction) => (
-                  <div key={transaction.id} className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-3 sm:p-4 bg-slate-800 rounded-xl border border-slate-700 gap-3">
-                    <div className="flex items-center gap-3 sm:gap-4">
+                  <div key={transaction.id} className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-3 sm:p-4 bg-slate-800/50 rounded-xl border border-slate-700/30 gap-3">
+                    <div className="flex items-center gap-3 sm:gap-4 min-w-0 flex-1">
                       <div className={`px-2 sm:px-3 py-1 rounded-full text-xs font-medium border ${
                         transaction.status === 'success' ? 'text-green-400 bg-green-400/10 border-green-400/20' :
                         transaction.status === 'pending' ? 'text-yellow-400 bg-yellow-400/10 border-yellow-400/20' :
@@ -303,8 +399,8 @@ const AdminUserDetail: React.FC = () => {
                       }`}>
                         {transaction.status.charAt(0).toUpperCase() + transaction.status.slice(1)}
                       </div>
-                      <div>
-                        <p className="text-white font-medium text-sm sm:text-base">{transaction.description}</p>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-white font-medium text-sm sm:text-base truncate">{transaction.description}</p>
                         <p className="text-xs text-slate-400">
                           {new Date(transaction.timestamp).toLocaleDateString()} at {new Date(transaction.timestamp).toLocaleTimeString()}
                         </p>
@@ -313,7 +409,7 @@ const AdminUserDetail: React.FC = () => {
                     
                     <div className="text-right">
                       <p className={`font-semibold text-base sm:text-lg ${transaction.type === 'credit' ? 'text-green-400' : 'text-red-400'}`}>
-                        {transaction.type === 'credit' ? '+' : '-'}${transaction.amount.toFixed(2)}
+                        {transaction.type === 'credit' ? '+' : '-'}{formatCurrency(transaction.amount)}
                       </p>
                       <p className="text-xs text-slate-400 capitalize">{transaction.type}</p>
                     </div>

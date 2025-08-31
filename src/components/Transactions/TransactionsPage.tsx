@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { History, Search, Filter, ArrowDownLeft, ArrowUpRight, Clock, CheckCircle, X } from 'lucide-react';
 import Input from '../UI/Input';
 import Button from '../UI/Button';
+import TransactionReceiptModal from '../Home/TransactionReceiptModal';
 
 interface Transaction {
   id: string;
@@ -24,6 +25,8 @@ const TransactionsPage: React.FC<TransactionsPageProps> = ({ transactions }) => 
   const [statusFilter, setStatusFilter] = useState('all');
   const [typeFilter, setTypeFilter] = useState('all');
   const [currentPage, setCurrentPage] = useState(1);
+  const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
+  const [isReceiptModalOpen, setIsReceiptModalOpen] = useState(false);
   const itemsPerPage = 10;
 
   // Normalize transaction data to handle both formats
@@ -77,6 +80,18 @@ const TransactionsPage: React.FC<TransactionsPageProps> = ({ transactions }) => 
   const paginatedTransactions = filteredTransactions.slice(startIndex, startIndex + itemsPerPage);
   const totalPages = Math.ceil(filteredTransactions.length / itemsPerPage);
 
+  // Handle transaction click to open receipt
+  const handleTransactionClick = (transaction: Transaction) => {
+    setSelectedTransaction(transaction);
+    setIsReceiptModalOpen(true);
+  };
+
+  // Close receipt modal
+  const closeReceiptModal = () => {
+    setIsReceiptModalOpen(false);
+    setSelectedTransaction(null);
+  };
+
   const formatAmount = (amount: number) => {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
@@ -101,25 +116,29 @@ const TransactionsPage: React.FC<TransactionsPageProps> = ({ transactions }) => 
         minute: '2-digit'
       }).format(date);
     } catch (error) {
-      return 'Date error';
+      return 'Invalid date';
     }
   };
 
-  const clearFilters = () => {
-    setSearchTerm('');
-    setStatusFilter('all');
-    setTypeFilter('all');
-    setCurrentPage(1);
+  // Convert transaction to receipt format
+  const convertToReceiptFormat = (transaction: Transaction) => {
+    return {
+      id: transaction.id,
+      amount: transaction.amount,
+      description: transaction.description || `${transaction.displayType} ${transaction.displayCurrency}`,
+      status: transaction.displayStatus === 'completed' ? 'success' : 
+              transaction.displayStatus === 'denied' ? 'denied' : 'pending',
+      timestamp: transaction.displayDate || new Date(),
+      type: transaction.displayType === 'deposit' ? 'credit' : 'debit'
+    };
   };
 
   return (
-    <div className="space-y-6 animate-fade-in">
+    <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <div className="flex items-center">
-          <div className="p-3 bg-blue-500/10 rounded-xl mr-4">
-            <History className="w-6 h-6 text-blue-400" />
-          </div>
+        <div className="flex items-center gap-3">
+          <History className="w-8 h-8 text-neon-green" />
           <div>
             <h1 className="text-2xl font-bold text-white">Transaction History</h1>
             <p className="text-slate-400">View and manage all your transactions</p>
@@ -127,72 +146,51 @@ const TransactionsPage: React.FC<TransactionsPageProps> = ({ transactions }) => 
         </div>
       </div>
 
-      {/* Filters */}
-      <div className="bg-slate-800 border border-slate-700 rounded-2xl p-6">
-        <div className="flex flex-wrap gap-4 mb-4">
-          {/* Search */}
-          <div className="flex-1 min-w-64">
-            <Input
-              icon={Search}
-              placeholder="Search by transaction ID, currency, or description"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
-          </div>
+      {/* Filters and Search */}
+      <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+          <Input
+            icon={Search}
+            placeholder="Search transactions..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
           
-          {/* Status Filter */}
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
-            className="px-4 py-3 bg-slate-700 border border-slate-600 rounded-xl text-slate-100 focus:outline-none focus:ring-2 focus:ring-green-500"
+            className="bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-neon-green/50 focus:border-neon-green"
           >
-            <option value="all">All Status</option>
-            <option value="pending">Pending</option>
+            <option value="all">All Statuses</option>
             <option value="completed">Completed</option>
+            <option value="pending">Pending</option>
             <option value="denied">Denied</option>
           </select>
-
-          {/* Type Filter */}
+          
           <select
             value={typeFilter}
             onChange={(e) => setTypeFilter(e.target.value)}
-            className="px-4 py-3 bg-slate-700 border border-slate-600 rounded-xl text-slate-100 focus:outline-none focus:ring-2 focus:ring-green-500"
+            className="bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-neon-green/50 focus:border-neon-green"
           >
             <option value="all">All Types</option>
             <option value="deposit">Deposits</option>
             <option value="withdrawal">Withdrawals</option>
           </select>
-
-          {/* Clear Filters */}
-          <Button variant="secondary" onClick={clearFilters} icon={X} size="sm">
-            Clear
-          </Button>
         </div>
 
-        {/* Results Summary */}
-        <div className="flex items-center justify-between text-sm text-slate-400">
-          <span>Showing {paginatedTransactions.length} of {filteredTransactions.length} transactions</span>
-          <div className="flex items-center">
-            <Filter className="w-4 h-4 mr-1" />
-            <span>Filters active: {[searchTerm, statusFilter !== 'all' ? statusFilter : null, typeFilter !== 'all' ? typeFilter : null].filter(Boolean).length}</span>
-          </div>
+        {/* Transaction Count */}
+        <div className="text-sm text-slate-400 mb-4">
+          Showing {filteredTransactions.length} of {transactions.length} transactions
         </div>
-      </div>
 
-      {/* Transactions List */}
-      <div className="bg-slate-800 border border-slate-700 rounded-2xl p-6">
-        {paginatedTransactions.length === 0 ? (
-          <div className="text-center py-12">
-            <History className="w-12 h-12 text-slate-600 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-slate-400 mb-2">No transactions found</h3>
-            <p className="text-sm text-slate-500">Try adjusting your search or filter criteria</p>
-          </div>
-        ) : (
-          <div className="space-y-4">
+        {/* Transactions List */}
+        {paginatedTransactions.length > 0 ? (
+          <div className="space-y-3">
             {paginatedTransactions.map((transaction) => (
-              <div
-                key={transaction.id}
-                className="flex items-center justify-between p-4 bg-slate-700/30 rounded-xl border border-slate-600/50 hover:border-slate-600 hover:bg-slate-700/50 transition-all duration-200"
+              <div 
+                key={transaction.id} 
+                className="flex items-center justify-between p-4 bg-slate-800 rounded-xl border border-slate-700 hover:bg-slate-750 transition-colors cursor-pointer group"
+                onClick={() => handleTransactionClick(transaction)}
               >
                 <div className="flex items-center">
                   <div className={`p-3 rounded-xl mr-4 ${
@@ -208,7 +206,7 @@ const TransactionsPage: React.FC<TransactionsPageProps> = ({ transactions }) => 
                   </div>
                   <div>
                     <div className="flex items-center mb-1">
-                      <p className="text-sm font-medium text-white capitalize mr-3">
+                      <p className="text-sm font-medium text-white capitalize mr-3 group-hover:text-blue-300 transition-colors">
                         {transaction.displayType}
                       </p>
                       <span className="px-2 py-0.5 text-xs font-medium bg-slate-600 text-slate-300 rounded-md mr-2">
@@ -259,6 +257,16 @@ const TransactionsPage: React.FC<TransactionsPageProps> = ({ transactions }) => 
               </div>
             ))}
           </div>
+        ) : (
+          <div className="text-center py-12">
+            <History className="w-16 h-16 text-slate-600 mx-auto mb-4" />
+            <h3 className="text-lg font-medium text-slate-300 mb-2">No transactions found</h3>
+            <p className="text-slate-500">
+              {searchTerm || statusFilter !== 'all' || typeFilter !== 'all' 
+                ? 'Try adjusting your filters or search terms' 
+                : 'Your transaction history will appear here once you make transactions'}
+            </p>
+          </div>
         )}
 
         {/* Pagination */}
@@ -288,6 +296,16 @@ const TransactionsPage: React.FC<TransactionsPageProps> = ({ transactions }) => 
           </div>
         )}
       </div>
+
+      {/* Transaction Receipt Modal */}
+      {selectedTransaction && (
+        <TransactionReceiptModal
+          transaction={convertToReceiptFormat(selectedTransaction)}
+          isOpen={isReceiptModalOpen}
+          onClose={closeReceiptModal}
+          userBalance={0} // This will need to be passed from parent component
+        />
+      )}
     </div>
   );
 };

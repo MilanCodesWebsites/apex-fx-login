@@ -1,13 +1,14 @@
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { TrendingUp, TrendingDown, DollarSign, Clock, CheckCircle, XCircle, AlertCircle, Quote, Target, Zap } from 'lucide-react';
+import TransactionReceiptModal from './TransactionReceiptModal';
 
 interface Transaction {
   id: string;
   amount: number;
   description: string;
   status: 'pending' | 'success' | 'denied';
-  timestamp: Date;
+  timestamp: Date | string;
   type: 'credit' | 'debit';
 }
 
@@ -19,6 +20,10 @@ const Dashboard: React.FC = () => {
   const totalBalance = user?.balance || 0;
   const initialBalance = user?.initialBalance || 0;
 
+  // Receipt modal state
+  const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
+  const [isReceiptModalOpen, setIsReceiptModalOpen] = useState(false);
+
   // Calculate P&L percentage
   const calculatePnL = () => {
     if (initialBalance === 0) return 0;
@@ -27,6 +32,39 @@ const Dashboard: React.FC = () => {
 
   const pnlPercentage = calculatePnL();
   const pnlAmount = totalBalance - initialBalance;
+
+  // Handle transaction click to open receipt
+  const handleTransactionClick = (transaction: Transaction) => {
+    setSelectedTransaction(transaction);
+    setIsReceiptModalOpen(true);
+  };
+
+  // Close receipt modal
+  const closeReceiptModal = () => {
+    setIsReceiptModalOpen(false);
+    setSelectedTransaction(null);
+  };
+
+  // Safe date formatting for display
+  const formatDisplayDate = (timestamp: Date | string) => {
+    try {
+      const date = timestamp instanceof Date ? timestamp : new Date(timestamp);
+      if (isNaN(date.getTime())) return 'Invalid Date';
+      return date.toLocaleDateString();
+    } catch (error) {
+      return 'Invalid Date';
+    }
+  };
+
+  const formatDisplayTime = (timestamp: Date | string) => {
+    try {
+      const date = timestamp instanceof Date ? timestamp : new Date(timestamp);
+      if (isNaN(date.getTime())) return 'Invalid Time';
+      return date.toLocaleTimeString();
+    } catch (error) {
+      return 'Invalid Time';
+    }
+  };
 
   // Motivational quotes that change every 24 hours
   const motivationalQuotes = [
@@ -290,7 +328,11 @@ const Dashboard: React.FC = () => {
         
         <div className="space-y-3">
           {transactions.map((transaction) => (
-            <div key={transaction.id} className="flex items-center justify-between p-4 bg-slate-800 rounded-xl border border-slate-700 hover:bg-slate-750 transition-colors">
+            <div 
+              key={transaction.id} 
+              className="flex items-center justify-between p-4 bg-slate-800 rounded-xl border border-slate-700 hover:bg-slate-750 transition-colors cursor-pointer group"
+              onClick={() => handleTransactionClick(transaction)}
+            >
               <div className="flex items-center gap-4">
                 <div className="flex items-center gap-2">
                   {getStatusIcon(transaction.status)}
@@ -300,9 +342,9 @@ const Dashboard: React.FC = () => {
                 </div>
                 
                 <div>
-                  <p className="text-white font-medium">{transaction.description}</p>
+                  <p className="text-white font-medium group-hover:text-blue-300 transition-colors">{transaction.description}</p>
                   <p className="text-sm text-slate-400">
-                    {new Date(transaction.timestamp).toLocaleDateString()} at {new Date(transaction.timestamp).toLocaleTimeString()}
+                    {formatDisplayDate(transaction.timestamp)} at {formatDisplayTime(transaction.timestamp)}
                   </p>
                 </div>
               </div>
@@ -325,6 +367,14 @@ const Dashboard: React.FC = () => {
           )}
         </div>
       </div>
+
+      {/* Transaction Receipt Modal */}
+      <TransactionReceiptModal
+        transaction={selectedTransaction}
+        isOpen={isReceiptModalOpen}
+        onClose={closeReceiptModal}
+        userBalance={totalBalance}
+      />
     </div>
   );
 };

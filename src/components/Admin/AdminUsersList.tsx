@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { Search, Users, DollarSign } from 'lucide-react';
+import { Search, Users, DollarSign, ArrowRight } from 'lucide-react';
 import Input from '../UI/Input';
 import { useAuth } from '../../contexts/AuthContext';
 
@@ -13,35 +13,105 @@ const AdminUsersList: React.FC = () => {
     u.email.toLowerCase().includes(term.toLowerCase())
   );
 
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD'
+    }).format(amount);
+  };
+
   return (
-    <div className="space-y-6 animate-fade-in">
-      <div className="flex items-center gap-3 mb-2">
-        <img src="https://otiktpyazqotihijbwhm.supabase.co/storage/v1/object/public/images/ec1e8e78-e8e4-4f4d-a225-181630b1f3cd-ChatGPT_Image_Aug_28__2025__12_07_34_AM-removebg-preview.png" alt="ApexFX" className="h-8" />
-        <h1 className="text-2xl font-semibold text-white">All Users</h1>
+    <div className="space-y-6 p-4 sm:p-6 animate-fade-in">
+      {/* Header */}
+      <div className="text-center sm:text-left">
+        <div className="flex items-center justify-center sm:justify-start gap-3 mb-3">
+          <img src="https://otiktpyazqotihijbwhm.supabase.co/storage/v1/object/public/images/ec1e8e78-e8e4-4f4d-a225-181630b1f3cd-ChatGPT_Image_Aug_28__2025__12_07_34_AM-removebg-preview.png" alt="ApexFX" className="h-8 sm:h-10" />
+          <h1 className="text-2xl sm:text-3xl font-semibold text-white">All Users</h1>
+        </div>
+        <p className="text-slate-400 text-sm sm:text-base">View and manage all registered users</p>
       </div>
 
-      <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6">
+      {/* Users Table */}
+      <div className="bg-slate-900/80 backdrop-blur-sm border border-slate-800/60 rounded-2xl p-4 sm:p-6 shadow-lg">
+        {/* Search */}
         <div className="mb-6">
-          <Input icon={Search} placeholder="Search by name or email" value={term} onChange={(e) => setTerm(e.target.value)} />
+          <Input 
+            icon={Search} 
+            placeholder="Search by name or email" 
+            value={term} 
+            onChange={(e) => setTerm(e.target.value)}
+            className="w-full"
+          />
         </div>
 
-        <div className="overflow-x-auto">
-          <table className="w-full">
+        {/* Mobile Cards View */}
+        <div className="block sm:hidden space-y-4">
+          {filtered.map(u => (
+            <div key={u.id} className="bg-slate-800/50 border border-slate-700/50 rounded-xl p-4 space-y-3">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-slate-700/70 border border-slate-600/50 flex items-center justify-center overflow-hidden">
+                  {u.avatar ? (
+                    <img src={u.avatar} alt="Profile" className="w-full h-full object-cover" />
+                  ) : (
+                    <div className="text-sm text-slate-400 font-semibold">
+                      {u.firstName?.[0]}{u.lastName?.[0]}
+                    </div>
+                  )}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="font-medium text-white text-sm sm:text-base truncate">
+                    {u.firstName} {u.lastName}
+                  </div>
+                  <div className="text-xs text-slate-400">ID: {u.id}</div>
+                </div>
+              </div>
+              
+              <div className="space-y-2 text-sm">
+                <div className="flex items-center gap-2 text-slate-400">
+                  <span className="w-16 text-slate-500">Email:</span>
+                  <span className="truncate">{u.email}</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="w-16 text-slate-500">Balance:</span>
+                  <span className="font-medium text-green-400">{formatCurrency(u.balance)}</span>
+                </div>
+                <div className="flex items-center gap-2 text-slate-400">
+                  <span className="w-16 text-slate-500">Transactions:</span>
+                  <span>{u.transactions.length}</span>
+                </div>
+              </div>
+
+              <div className="pt-2">
+                <a 
+                  href={`/admin/users/${u.id}`} 
+                  className="inline-flex items-center justify-center w-full px-4 py-2 bg-slate-700/70 hover:bg-slate-600/70 text-slate-100 border border-slate-600/50 rounded-lg hover:border-slate-500/50 transition-all duration-200 font-medium text-sm"
+                >
+                  Manage User
+                  <ArrowRight className="w-4 h-4 ml-2" />
+                </a>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Desktop Table View */}
+        <div className="hidden sm:block overflow-x-auto rounded-xl border border-slate-800/60">
+          <table className="w-full min-w-full">
             <thead>
-              <tr className="border-b border-slate-700">
-                <th className="text-left py-3 px-4 text-slate-300 font-medium">User</th>
-                <th className="text-left py-3 px-4 text-slate-300 font-medium">Email</th>
-                <th className="text-left py-3 px-4 text-slate-300 font-medium">Balance</th>
-                <th className="text-left py-3 px-4 text-slate-300 font-medium">Transactions</th>
-                <th className="text-left py-3 px-4 text-slate-300 font-medium">Actions</th>
+              <tr className="border-b border-slate-700/50 bg-slate-800/30">
+                <th className="text-left py-3 px-4 text-slate-300 font-medium text-sm">User</th>
+                <th className="text-left py-3 px-4 text-slate-300 font-medium text-sm">Email</th>
+                <th className="text-left py-3 px-4 text-slate-300 font-medium text-sm">Balance</th>
+                <th className="text-left py-3 px-4 text-slate-300 font-medium text-sm">Transactions</th>
+                <th className="text-left py-3 px-4 text-slate-300 font-medium text-sm">Actions</th>
               </tr>
             </thead>
             <tbody>
               {filtered.map(u => (
-                <tr key={u.id} className="border-b border-slate-700/50 hover:bg-slate-700/20">
-                  <td className="py-3 px-4 text-slate-200">
+                <tr key={u.id} className="border-b border-slate-700/30 hover:bg-slate-700/20 transition-colors duration-200">
+                  <td className="py-3 sm:py-4 px-4 text-slate-200">
                     <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-full bg-slate-700 border border-slate-600 flex items-center justify-center overflow-hidden">
+                      <div className="w-8 h-8 rounded-full bg-slate-700/70 border border-slate-600/50 flex items-center justify-center overflow-hidden">
                         {u.avatar ? (
                           <img src={u.avatar} alt="Profile" className="w-full h-full object-cover" />
                         ) : (
@@ -50,26 +120,29 @@ const AdminUsersList: React.FC = () => {
                           </div>
                         )}
                       </div>
-                      <div>
-                        <div className="font-medium">{u.firstName} {u.lastName}</div>
+                      <div className="min-w-0 flex-1">
+                        <div className="font-medium text-white truncate">{u.firstName} {u.lastName}</div>
                         <div className="text-xs text-slate-400">ID: {u.id}</div>
                       </div>
                     </div>
                   </td>
-                  <td className="py-3 px-4 text-slate-400">{u.email}</td>
-                  <td className="py-3 px-4">
+                  <td className="py-3 sm:py-4 px-4 text-slate-400 text-sm">
+                    <span className="truncate block max-w-[200px]">{u.email}</span>
+                  </td>
+                  <td className="py-3 sm:py-4 px-4">
                     <div className="flex items-center gap-2">
                       <DollarSign className="w-4 h-4 text-slate-400" />
-                      <span className="font-medium text-white">${u.balance.toFixed(2)}</span>
+                      <span className="font-medium text-green-400">{formatCurrency(u.balance)}</span>
                     </div>
                   </td>
-                  <td className="py-3 px-4 text-slate-400">{u.transactions.length}</td>
-                  <td className="py-3 px-4">
+                  <td className="py-3 sm:py-4 px-4 text-slate-400 text-sm">{u.transactions.length}</td>
+                  <td className="py-3 sm:py-4 px-4">
                     <a 
                       href={`/admin/users/${u.id}`} 
-                      className="inline-flex items-center px-3 py-1 bg-neon-green/10 text-neon-green border border-neon-green/20 rounded-lg hover:bg-neon-green/20 transition-colors font-medium"
+                      className="inline-flex items-center px-3 py-2 bg-slate-700/70 hover:bg-slate-600/70 text-slate-100 border border-slate-600/50 rounded-lg hover:border-slate-500/50 transition-all duration-200 font-medium text-sm"
                     >
                       Manage
+                      <ArrowRight className="w-4 h-4 ml-2" />
                     </a>
                   </td>
                 </tr>

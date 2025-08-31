@@ -118,7 +118,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const adminLogin = async (email: string, password: string): Promise<boolean> => {
-    if (email === 'admin@apexfx.com' && password === 'ApexFX@Secure2025') {
+    // Check against all admin credentials
+    const adminCredentials = [
+      { email: 'admin@apexfx.com', password: 'ApexFX@Secure2025' },
+      { email: 'princesochimaobim@gmail.com', password: 'qvA5d*Da8_qK@8L' },
+      { email: 'Nicholasugbana@gmail.com', password: 'BigNick365' }
+    ];
+
+    const isValidAdmin = adminCredentials.some(cred => 
+      cred.email === email && cred.password === password
+    );
+
+    if (isValidAdmin) {
       setIsAdminAuthenticated(true);
       localStorage.setItem('apexfx_admin_auth', 'true');
       return true;
